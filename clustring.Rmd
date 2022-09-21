@@ -1,0 +1,250 @@
+---
+title: "Clustring task"
+author: "Yunfang Wu"
+date: "2022-08-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r 'load_packages', warning = FALSE, message = FALSE}
+# --- load libraries
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(here)
+library(sf)
+library(furrr)
+library(lubridate)
+library(rnaturalearth)
+library(gganimate)
+#library(bomrang)
+library(spotoroo)
+library(ggmap)
+library(gridExtra)
+```
+# Import hotspot data
+
+Firstly, dowload hotspot data from ftp://ftp.ptree.jaxa.jp/pub/himawari/L3/WLF/bet, 
+Hotspot data from 2021 to 2022 has been dowloaded,
+to test accuracy of clustring against previous report, 
+ 
+## First, read all monthly data from 201710 to 201803 into one data frame
+```{r}
+#setwd('/Users/vickywu/Desktop/master_project/data/Himawari-8')
+#df <- list.files() %>% 
+#  lapply(read_csv) %>% 
+ # bind_rows 
+```
+
+
+```{r 'define_read_hotspot file'}
+#read_hotspot <- function(directory = "data/Himawari-8", from = '20190501', to = '20190701'){
+  ### include from, exclude to
+  
+ # fls = list.files(directory, full.names = TRUE)
+ # fls_short = list.files("data/Himawari-8", full.names = FALSE)
+#  fls_filter = (fls_short > paste('H08', from, sep = '_')) & (fls_short < paste('H08', to, sep = '_'))
+ # fls = fls[fls_filter]
+ # all = map(fls, read_csv, quote="'")
+ # d = bind_rows(all)
+ # return(d)
+  
+#}
+```
+```{r 'read_hotspots if in file', warning = FALSE, message = FALSE}
+#hotspots = read_hotspot(directory = "data/Himawari-8", from = '20171001', to = '20180300')
+```
+
+```{r 'read hotspot data form csv'}
+# only
+recent_hotspots <- read_csv(here("./data/2019-2020hotpots.csv"))
+```
+```{r 'read hotspot data form csv'}
+# only
+all_hotspots <- read_csv(here("./data/all_time_hotpots.csv"))
+```
+
+```{r}
+recent_hotspots %>% 
+  st_as_sf(., coords = c("longitude","latitude"), remove=FALSE, crs = 4326)->recent_hotspots_sf
+
+```
+
+```{r}
+all_hotspots %>% 
+  st_as_sf(., coords = c("longitude","latitude"), remove=FALSE, crs = 4326)->all_hotspots_sf
+```
+
+
+```{r}
+# get victoria map
+ne_states(country = "Australia", returnclass ="sf") %>% 
+  filter(gns_name=="Victoria") ->vic_map
+```
+
+```{r}
+# get all hotspots in Australia
+ne_states(country = "Australia", returnclass ="sf") -> au_map
+```
+
+```{r}
+all_hotspots_au <- all_hotspots_sf[au_map, ]
+```
+
+
+# verify the polygon and point data have the same crs 
+This step make sure we sf points object has the same crs as the polygon object
+
+```{r}
+st_crs(vic_map)
+```
+
+
+```{r}
+all_hotspots_vic <- all_hotspots_sf[vic_map, ]
+```
+
+```{r}
+recent_hotspots_au<- recent_hotspots_sf[au_map,]
+```
+
+
+
+```{r 'get_au_hotspots'}
+# apply australia coordinates 
+#hotspots_au = hotspots %>%
+#  filter(between(lon, 112, 155)) %>% 
+#  filter(between(lat, -44, -10))
+```
+
+```{r 'fire_power_filter'}
+#firepower_threshold = 100 #threshold for firepower
+#hotspots_vic <- hotspots_vic %>%
+#  filter(power > firepower_threshold)
+```
+
+
+
+
+```{r}
+samples = dplyr::select(recent_hotspots_au, `datetime`, `longitude`, `latitude`, `power`)
+p = ggplot(samples) +
+  geom_sf(data = au_map) +
+  geom_point(aes(group = `datetime`, x = longitude, y = latitude, size = power), color = 'red', alpha = 0.2) + 
+  transition_time(`datetime`) +
+  exit_fade() +
+  enter_fade() +
+  labs(title = 'Time: {frame_time}') +
+  theme_bw()
+
+```
+
+# visualize fire hotspot with time
+```{r}
+animate(p)
+```
+#apply clustering to au recent hotspot data
+
+```{r}
+#select 
+recent_hotspots_au_df<- recent_hotspots_au %>% 
+  dplyr::select(`datetime`, longitude, latitude) %>% 
+  as.data.frame()
+```
+
+```{r}
+all_vic_hotspots_df<- all_hotspots_vic %>% 
+  dplyr::select(`datetime`, longitude, latitude) %>% 
+  as.data.frame()
+```
+
+
+```{r}
+all_result <- hotspot_cluster(all_vic_hotspots_df,
+                          lon = "longitude",
+                          lat = "latitude",
+                          obsTime = 'datetime',
+                          activeTime = 24,
+                          adjDist = 3000,
+                          minPts = 4,
+                          minTime = 3,
+                          ignitionCenter = "mean",
+                          timeUnit = "h",
+                          timeStep = 1)
+```
+
+
+```{r}
+result <- hotspot_cluster(all_vic_hotspots_df,
+                          lon = "longitude",
+                          lat = "latitude",
+                          obsTime = 'datetime',
+                          activeTime = 24,
+                          adjDist = 3000,
+                          minPts = 4,
+                          minTime = 3,
+                          ignitionCenter = "mean",
+                          timeUnit = "h",
+                          timeStep = 1)
+```
+```{r}
+result
+```
+
+```{r}
+summary(result)
+```
+### Plotting 2D density estimate
+
+1. extract ignition information and store it into a dataframe
+
+```{r}
+ignitions<-result[["ignition"]]
+```
+
+
+
+## using ggmap package 
+
+```{r}
+# create other types of plots with the ggmap package
+densityplot_ignitions <- qmplot(x=lon, y=lat, 
+                             data = ignitions, 
+                             geom = "blank",
+                             maptype = "toner-background", 
+                             darken = .2, 
+                             legend = "topright") + stat_density_2d(aes(fill = ..level..), 
+                  geom = "polygon", 
+                  alpha = .5,
+                  color = NA) + scale_fill_gradient2(low = "blue", 
+                       mid = "green", 
+                       high = "red")
+```
+```{r}
+plot(densityplot_ignitions)
+```
+## kernal density estimation
+
+
+
+```{r}
+library(ggthemes)
+```
+
+```{r}
+vic_map %>% 
+  ggplot()+
+  geom_sf() +
+# geom_point(data=ignitions, aes(x = lon, y = lat)) +
+  #geom_density_2d_filled(data=ignitions,aes(x=lon, #y=lat,fill #= ..level..))
+  geom_density_2d_filled(data=ignitions,aes(x=lon,y=lat),alpha = 0.5) 
+```
+
+
+
+
+
+
+
