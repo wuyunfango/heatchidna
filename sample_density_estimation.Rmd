@@ -546,17 +546,30 @@ Here is the visualization of the density estimation on sample data
 print(p_igni)
 ```
 
+lastly, we can store the estimated result into a data frame
+
+
+```{r}
+# rename list to use for the raster package
+names(estimated) <- c("x","y","z","ZNA","H","W")
+```
 
 
 
 ```{r}
-
+# store density estimate to a data frame
 library(raster)
-
+# create raster layer for density estimation
 r = raster(estimated)
-df= as.data.frame(r,xy=T)
+estimated_df= as.data.frame(r,xy=T)
 
 ```
 
+
+Visualization of the raster layer
+
+```{r}
+plot(r)
+```
 
 
