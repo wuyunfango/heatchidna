@@ -128,8 +128,6 @@ vic_polygon<-df_union_cast[[1]]
 
 
 
-
-
 ```{r}
 #code to create polygon reference
 #ig_coords <- ignitions[,c("lon","lat")]
@@ -299,6 +297,7 @@ sKDE <- function(U, polygon, optimal = TRUE, h = .1, parallel = FALSE, n_cluster
     W = fhat$w)
 }# End of sKDE()
 ```
+
 ```{r}
 #' Computes an estimation of the density using Kernel Density estimator,
 #' without correcting for fontier effects.
@@ -498,7 +497,7 @@ vic_matrix<-vic_polygon[[1]]
 ```
 
 Estimation with correction
-The function sKDE() computes the kernel density estimates, correcting for a possible frontier bias. It returns a list, whose elements are : - X: x coordinates at wich estimate is evaluated; - Y: y coordinates at wich estimate is evaluated; - Z: density estimates; - ZNA: density estimates with NA values for points outside the polygon; - H: bandwidth matrix; - W: vector of weights.
+The function sKDE() computes the kernel density estimates, correcting for a possible frontier bias. It returns a list, whose elements are : - X: x coordinates at which estimate is evaluated; - Y: y coordinates at wich estimate is evaluated; - Z: density estimates; - ZNA: density estimates with NA values for points outside the polygon; - H: bandwidth matrix; - W: vector of weights.
 
 
 ```{r}
@@ -570,4 +569,14 @@ print(p_igni_nc)
 ```
 
 
+```{r}
+ignitions<- tibble(lat = igni$Y, 
+                   lon = igni$X,
+                   prob =igni$Z)
+```
+
+```{r}
+ignitions
+
+```
 
