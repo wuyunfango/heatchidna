@@ -539,6 +539,9 @@ p_igni <- plot_sKDE(smooth = estimated,
 
 ```
 
+
+Here is the visualization of the density estimation on sample data
+
 ```{r}
 print(p_igni)
 ```
