@@ -448,6 +448,12 @@ plot_sKDE <- function(smooth, breaks, polygon, coord, alpha_coords = .8, size_co
 
 ```
 
+```{r}
+ne_states(country = "Australia", returnclass ="sf") %>% 
+  filter(gns_name=="Victoria") ->vic_map
+```
+
+
 
 Filter hotspots to show vic hotspots only
 
@@ -553,8 +559,8 @@ names(estimated) <- c("x","y","z","ZNA","H","W")
 # store density estimate to a data frame
 library(raster)
 # create raster layer for density estimation
-r = raster(estimated,crs=crs(au_map))
-estimated_df= as.data.frame(r,xy=T,crs=crs(au_map))
+r = raster(estimated,crs=st_crs(vic_map))
+estimated_df= as.data.frame(r,xy=T,crs=st_crs(vic_map))
 
 ```
 
