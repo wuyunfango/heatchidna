@@ -601,27 +601,16 @@ lightning_ignitions$density_result <- results
 ```{r}
 lightning_ignitions
 ```
+```{r}
+#check result
+ggplot(lightning_ignitions,aes(x=long,y=lat,color=density_result)) +
+  geom_point(alpha=0.2)
+```
 
-
-
-
-
-
-
-
-
-
-
+The combining result shows similar density probability pattern as original density estimation output, seems correct. 
 
 
 ```{r}
-
-modelling <-lightning_ignitions %>% 
-  left_join(estimated_df, by=c("long"="long","lat"="lat"))
+write.csv(lightning_ignitions,here::here("data/sample_estimate.csv"), row.names = FALSE)
 ```
-
-```{r}
-modelling
-```
-
 
