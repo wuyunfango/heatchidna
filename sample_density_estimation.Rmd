@@ -490,6 +490,8 @@ sample_ignitions %>%
 
 
 
+
+
 ```{r}
 library(parallel)
 library(pbapply)
@@ -497,7 +499,7 @@ colnames(lightning_ignitions)[1:3]<-c("code","long","lat")
 # Estimation with correction (using parallel computation on three clusters)
 estimated <- sKDE(U = lightning_ignitions[,c("long", "lat")],
                          polygon = vic_polygon, optimal=TRUE,
-                         parallel=TRUE, n_clusters = 4)
+                         parallel=TRUE, n_clusters = 3)
 estimated_nc <- sKDE_without_c(U = lightning_ignitions[,c("long", "lat")] ,
                                       polygon = vic_polygon, optimal=TRUE)
 ```
@@ -505,8 +507,10 @@ estimated_nc <- sKDE_without_c(U = lightning_ignitions[,c("long", "lat")] ,
 
 
 
+
+
 ```{r}
-# create dataframe using polygon for plotting
+# create data frame using polygon for plotting
 vic_polygon_df <-as.data.frame(st_coordinates(vic_polygon))
 
 vic_polygon_df %>% 
@@ -548,11 +552,12 @@ print(p_igni)
 lastly, we can store the estimated result into a data frame
 
 
+
+
 ```{r}
 # rename list to use for the raster package
 names(estimated) <- c("x","y","z","ZNA","H","W")
 ```
-
 
 
 ```{r}
@@ -561,14 +566,7 @@ library(raster)
 # create raster layer for density estimation
 r = raster(estimated,crs=st_crs(vic_map))
 estimated_df= as.data.frame(r,xy=T,crs=st_crs(vic_map))
-
 ```
-
-```{r}
-estimated_df
-```
-
-
 
 Visualization of the raster layer
 
@@ -578,25 +576,39 @@ plot(r)
 
 
 ```{r}
-library(viridis)
-ggplot() +
-  geom_raster(data=estimated_df, aes(x=x,y=y, fill=layer))+
-  coord_quickmap() +
-  scale_fill_viridis_c(direction=-1,option="magma") +
-  xlab("lat")+
-  ylab("lon")
+library(rts)
+lightning_ignitions %>% 
+  dplyr::select(long,lat) %>% 
+  as.matrix() -> lonlat
 ```
 
 ```{r}
-estimated_df %>% 
-  rename(.,long=x,lat=y,prob=layer)-> estimated_df
+#get cell index of estimation
+cell_index<-cellFromXY(r, lonlat)
+#get results for sample hotspots base on their index in the raster layer
+results<-values(r)[cell_index]
+```
+```{r}
+values(r)[16164]
 ```
 
 
 ```{r}
-modelling <- lightning_ignitions %>% 
-  left_join(estimated_df, by=c("long","lat"))
+lightning_ignitions$density_result <- results
 ```
+
+
+```{r}
+lightning_ignitions
+```
+
+
+
+
+
+
+
+
 
 
 
@@ -605,7 +617,7 @@ modelling <- lightning_ignitions %>%
 ```{r}
 
 modelling <-lightning_ignitions %>% 
-  left_join(estimated_df, by=c("long","lat"))
+  left_join(estimated_df, by=c("long"="long","lat"="lat"))
 ```
 
 ```{r}
