@@ -1,0 +1,122 @@
+---
+title: "model"
+author: "Yunfang Wu"
+date: "2022-10-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(here)
+library(rpart)
+library(rpart.plot)
+```
+
+```{r include=FALSE}
+#knitr::knit_child("sample_density_estimation.Rmd")
+```
+
+
+1. Read in data
+
+```{r}
+sample_hotspots <-read_csv(here::here("data/sample_estimate.csv"))
+```
+
+
+```{r}
+sample_hotspots<-sample_hotspots %>% 
+  select(-c(code,long,lat,new_cause,wod,day))
+```
+```{r}
+colnames(sample_hotspots)
+```
+
+
+
+Data description:
+FOR_TYPE: Forest type. Eg. Acacia, Callitris, Casuarina, etc.
+COVER: Forest crown cover
+HEIGHT: Forest height class
+arf360: Average rainfall in the past 360 days in mm
+ase90: Average global solar exposure in the past 90 days - MJ/m^2
+ase180: Average global solar exposure in the past 180 days - MJ/m^2
+ase720: Average global solar exposure in the past 720 days - MJ/m^2
+amaxt90: Average maximum temperature in the past 90 days - Celsius degree
+amaxt180: Average maximum temperature in the past 180 days - Celsius degree
+amaxt720: Average maximum temperature in the past 720 days - Celsius degree
+amint180: Average minimum temperature in the past 180 days - Celsius degree
+ws: Average wind speed on that day - m/s
+aws_m12: Average wind speed in last 12 months - m/s
+aws_m24: Average wind speed in last 24 months - m/s
+log_dist_cfa: Natural logarithm of the distance to the nearest CFA station - m
+log_dist_camp: Natural logarithm of the distance to the nearest recreation site - m
+log_dist_road: Natural logarithm of the distance to the nearest road - m
+
+
+
+
+
+2. Now split the data to training and testing sets, have the training set be 70% of the data, and the test set be 30% of the data.
+
+```{r}
+set.seed(123)
+model_df <- sample_hotspots%>%
+  mutate(test_or_train = 
+           sample(c("test","train"),n(),replace = TRUE, prob = c(.3,.7)))
+
+model_train <- model_df %>%
+  filter(test_or_train == "train")
+
+model_test <- model_df %>%
+  filter(test_or_train == "test")
+
+```
+
+3.Now use all the variables described above to create a regression tree with the price as an outcome using the training data only.
+
+```{r}
+set.seed(123)
+reg_tree <- rpart(density_result~FOR_TYPE+COVER+HEIGHT+rf+arf7+arf14+arf28+arf60+arf90+arf180       +arf360+arf720+se+ase7+ase14+ase28+ase60+ase90+ase180+ase360+ase720+maxt+amaxt7+amaxt14+amaxt28+amaxt60+amaxt90+amaxt180+amaxt360+amaxt720+mint+amint7+amint14+amint28+amint60+amint90+amint180+month     +density_result, data = model_train)
+```
+
+4. Create a visual representation of the tree 
+```{r}
+rpart.plot(reg_tree)
+```
+
+6. Use the tree to predict for the test part of the data
+
+```{r}
+set.seed(123)
+predictions_tree <- predict(reg_tree, model_test)
+```
+
+
+7. Calculate the root mean square error
+
+```{r}
+model_test <- model_test %>%
+  mutate(density_tree_preds = predictions_tree)
+
+model_test %>%
+  summarise(RMSE = sqrt(mean((density_result - density_tree_preds)^2)))
+
+```
+8. Compare this to the RMSE for a linear model with just the predictors used in the tree.
+```{r}
+reg_lm <- lm(density_result~FOR_TYPE+COVER+HEIGHT+rf+arf7+arf14+arf28+arf60+arf90+arf180       +arf360+arf720+se+ase7+ase14+ase28+ase60+ase90+ase180+ase360+ase720+maxt+amaxt7+amaxt14+amaxt28+amaxt60+amaxt90+amaxt180+amaxt360+amaxt720+mint+amint7+amint14+amint28+amint60+amint90+amint180+month     +density_result, data = model_train)
+
+model_test <-model_test %>%
+  mutate(density_lm_preds = predict(reg_lm, model_test))
+
+model_test %>%
+  summarise(RMSE = sqrt(mean((density_result - density_lm_preds)^2)))
+
+```
+
