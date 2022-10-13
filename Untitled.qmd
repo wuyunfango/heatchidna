@@ -1,0 +1,99 @@
+---
+title: "Exploring bushfire risk across Victoria with open data sources and open-source software"
+format: revealjs
+editor: visual
+---
+
+## Motivation
+
+Victoria, Australia is one of the most fire-prone regions in the world - given its fire-conducive weather and fuel conditions.
+
+```{r}
+#| echo: false
+#| fig-cap: "Historical fire hotspots in the state of Victoria, Australia"
+
+#samples = dplyr::select(all_hotspots_vic, `datetime`, `longitude`, `latitude`, `power`)
+#p = ggplot(samples) +
+#  geom_sf(data = vic_map) +
+#  geom_point(aes(group = `datetime`, x = longitude, y = latitude, size = power), color = 'red', alpha = 0.2) + 
+ # transition_time(`datetime`) +
+ # exit_fade() +
+ # enter_fade() +
+ # labs(title = 'Time: {frame_time}') +
+ # theme_bw()
+
+#animate(p)
+```
+
+## Research Questions
+
+-   What part of Victoria has higher bush fire risk?
+-   What factors are the more important for predicting the risk accurately
+-   How change in factors affect the bush fire risk of a particular location?
+
+## Methodology
+
+### What part of Victoria has higher bush fire risk?
+
+-   Kernal density estimation
+
+    a [non-parametric](https://en.wikipedia.org/wiki/Non-parametric_statistics "Non-parametric statistics") method to [estimate](https://en.wikipedia.org/wiki/Estimation "Estimation") the [probability density function](https://en.wikipedia.org/wiki/Probability_density_function "Probability density function") of a [random variable](https://en.wikipedia.org/wiki/Random_variable "Random variable") based on [*kernels*](https://en.wikipedia.org/wiki/Kernel_(statistics) "Kernel (statistics)") as [weights](https://en.wikipedia.org/wiki/Weight_function "Weight function").
+
+```{r}
+# Data
+set.seed(14012021)
+data <- rnorm(200, mean = 4)
+
+# Kernel density estimation
+d <- density(data)
+
+# Kernel density plot
+plot(d, lwd = 2, main = "Default kernel density plot")
+```
+
+## Methodology
+
+### What part of Victoria has higher bush fire risk?
+
+```{r}
+library(MASS)
+attach(geyser)
+plot(duration, waiting, xlim = c(0.5,6), ylim = c(40,100))
+f1 <- kde2d(duration, waiting, n = 50, lims = c(0.5, 6, 40, 100))
+image(f1, zlim = c(0, 0.05))
+f2 <- kde2d(duration, waiting, n = 50, lims = c(0.5, 6, 40, 100),
+            h = c(width.SJ(duration), width.SJ(waiting)) )
+image(f2, zlim = c(0, 0.05))
+persp(f2, phi = 30, theta = 20, d = 5)
+
+plot(duration[-272], duration[-1], xlim = c(0.5, 6),
+     ylim = c(1, 6),xlab = "previous duration", ylab = "duration")
+f1 <- kde2d(duration[-272], duration[-1],
+            h = rep(1.5, 2), n = 50, lims = c(0.5, 6, 0.5, 6))
+contour(f1, xlab = "previous duration",
+        ylab = "duration", levels  =  c(0.05, 0.1, 0.2, 0.4) )
+f1 <- kde2d(duration[-272], duration[-1],
+            h = rep(0.6, 2), n = 50, lims = c(0.5, 6, 0.5, 6))
+contour(f1, xlab = "previous duration",
+        ylab = "duration", levels  =  c(0.05, 0.1, 0.2, 0.4) )
+f1 <- kde2d(duration[-272], duration[-1],
+            h = rep(0.4, 2), n = 50, lims = c(0.5, 6, 0.5, 6))
+contour(f1, xlab = "previous duration",
+        ylab = "duration", levels  =  c(0.05, 0.1, 0.2, 0.4) )
+detach("geyser")
+```
+
+-   Bias of density estimation of edges (or frontiers) of regions
+
+    -   Broader bias is when
+
+    -   Ripley's correction
+
+```{r}
+#child = "sample_density_estimation.Rmd"
+    #| echo: false
+    #| fig-cap: "Desity estimation with correction of broader bias"
+
+
+  #  print(p_igni)
+```

@@ -15,10 +15,12 @@ library(tidyverse)
 library(here)
 library(rpart)
 library(rpart.plot)
+library(randomForest)
+library(knitr)
 ```
 
 ```{r include=FALSE}
-#knitr::knit_child("sample_density_estimation.Rmd")
+knitr::knit_child("sample_density_estimation.Rmd")
 ```
 
 
@@ -82,7 +84,7 @@ model_test <- model_df %>%
 
 ```{r}
 set.seed(123)
-reg_tree <- rpart(density_result~FOR_TYPE+COVER+HEIGHT+rf+arf7+arf14+arf28+arf60+arf90+arf180       +arf360+arf720+se+ase7+ase14+ase28+ase60+ase90+ase180+ase360+ase720+maxt+amaxt7+amaxt14+amaxt28+amaxt60+amaxt90+amaxt180+amaxt360+amaxt720+mint+amint7+amint14+amint28+amint60+amint90+amint180+month     +density_result, data = model_train)
+reg_tree <- rpart(density_result~FOR_TYPE+COVER+HEIGHT+rf+arf7+arf14+arf28+arf60+arf90+arf180       +arf360+arf720+se+ase7+ase14+ase28+ase60+ase90+ase180+ase360+ase720+maxt+amaxt7+amaxt14+amaxt28+amaxt60+amaxt90+amaxt180+amaxt360+amaxt720+mint+amint7+amint14+amint28+amint60+amint90+amint180+month , data = model_train)
 ```
 
 4. Create a visual representation of the tree 
@@ -110,7 +112,7 @@ model_test %>%
 ```
 8. Compare this to the RMSE for a linear model with just the predictors used in the tree.
 ```{r}
-reg_lm <- lm(density_result~FOR_TYPE+COVER+HEIGHT+rf+arf7+arf14+arf28+arf60+arf90+arf180       +arf360+arf720+se+ase7+ase14+ase28+ase60+ase90+ase180+ase360+ase720+maxt+amaxt7+amaxt14+amaxt28+amaxt60+amaxt90+amaxt180+amaxt360+amaxt720+mint+amint7+amint14+amint28+amint60+amint90+amint180+month     +density_result, data = model_train)
+reg_lm <- lm(density_result~FOR_TYPE+COVER+HEIGHT+rf+arf7+arf14+arf28+arf60+arf90+arf180       +arf360+arf720+se+ase7+ase14+ase28+ase60+ase90+ase180+ase360+ase720+maxt+amaxt7+amaxt14+amaxt28+amaxt60+amaxt90+amaxt180+amaxt360+amaxt720+mint+amint7+amint14+amint28+amint60+amint90+amint180+month, data = model_train)
 
 model_test <-model_test %>%
   mutate(density_lm_preds = predict(reg_lm, model_test))
@@ -119,4 +121,65 @@ model_test %>%
   summarise(RMSE = sqrt(mean((density_result - density_lm_preds)^2)))
 
 ```
+
+Now fit a random forest model.
+
+```{r}
+set.seed(456)
+RFM = randomForest(density_result~FOR_TYPE+COVER+HEIGHT+rf+arf7+arf14+arf28+arf60+arf90+arf180       +arf360+arf720+se+ase7+ase14+ase28+ase60+ase90+ase180+ase360+ase720+maxt+amaxt7+amaxt14+amaxt28+amaxt60+amaxt90+amaxt180+amaxt360+amaxt720+mint+amint7+amint14+amint28+amint60+amint90+amint180+month, data = model_train)
+```
+
+```{r}
+print(RFM)
+```
+
+0.002501067	
+
+6. Use the random forest model to predict for the test part of the data
+
+```{r}
+predictions_forest <- predict(RFM, model_test)
+```
+
+```{r}
+imp <- as.data.frame(sort(importance(RFM)[,1],decreasing = TRUE),optional = T)
+names(imp) <- "% Inc MSE"
+imp
+```
+Data description:
+FOR_TYPE: Forest type. Eg. Acacia, Callitris, Casuarina, etc.
+COVER: Forest crown cover
+HEIGHT: Forest height class
+arf360: Average rainfall in the past 360 days in mm
+ase90: Average global solar exposure in the past 90 days - MJ/m^2
+ase180: Average global solar exposure in the past 180 days - MJ/m^2
+ase720: Average global solar exposure in the past 720 days - MJ/m^2
+amaxt90: Average maximum temperature in the past 90 days - Celsius degree
+amaxt180: Average maximum temperature in the past 180 days - Celsius degree
+amaxt720: Average maximum temperature in the past 720 days - Celsius degree
+amint180: Average minimum temperature in the past 180 days - Celsius degree
+ws: Average wind speed on that day - m/s
+aws_m12: Average wind speed in last 12 months - m/s
+aws_m24: Average wind speed in last 24 months - m/s
+log_dist_cfa: Natural logarithm of the distance to the nearest CFA station - m
+log_dist_camp: Natural logarithm of the distance to the nearest recreation site - m
+log_dist_road: Natural logarithm of the distance to the nearest road - m
+
+
+
+
+
+```{r}
+model_test <- model_test %>%
+  mutate(density_forest_preds = predictions_forest)
+
+model_test %>%
+  summarise(MSE = mean((density_result - density_forest_preds)^2))
+```
+We can see that the random forest model has the lowerst RMSE.
+
+pick one hotspot, use 
+-predicted vs obs,
+-residual plot
+-obs, vs 3 most important var
 
