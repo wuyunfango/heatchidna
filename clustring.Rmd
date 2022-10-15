@@ -129,9 +129,9 @@ recent_hotspots_au<- recent_hotspots_sf[au_map,]
 
 
 ```{r}
-samples = dplyr::select(recent_hotspots_au, `datetime`, `longitude`, `latitude`, `power`)
+samples = dplyr::select(all_hotspots_vic, `datetime`, `longitude`, `latitude`, `power`)
 p = ggplot(samples) +
-  geom_sf(data = au_map) +
+  geom_sf(data = vic_map) +
   geom_point(aes(group = `datetime`, x = longitude, y = latitude, size = power), color = 'red', alpha = 0.2) + 
   transition_time(`datetime`) +
   exit_fade() +
@@ -233,14 +233,7 @@ plot(densityplot_ignitions)
 library(ggthemes)
 ```
 
-```{r}
-vic_map %>% 
-  ggplot()+
-  geom_sf() +
-# geom_point(data=ignitions, aes(x = lon, y = lat)) +
-  #geom_density_2d_filled(data=ignitions,aes(x=lon, #y=lat,fill #= ..level..))
-  geom_density_2d_filled(data=ignitions,aes(x=lon,y=lat),alpha = 0.5) 
-```
+
 
 
 

@@ -1,0 +1,50 @@
+---
+title: "test"
+author: "Yunfang Wu"
+date: "2022-10-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(MASS)
+attach(geyser)
+plot(duration, waiting, xlim = c(0.5,6), ylim = c(40,100))
+f1 <- kde2d(duration, waiting, n = 50, lims = c(0.5, 6, 40, 100))
+image(f1, zlim = c(0, 0.05))
+f2 <- kde2d(duration, waiting, n = 50, lims = c(0.5, 6, 40, 100),
+            h = c(width.SJ(duration), width.SJ(waiting)) )
+image(f2, zlim = c(0, 0.05))
+persp(f2, phi = 30, theta = 20, d = 5)
+
+plot(duration[-272], duration[-1], xlim = c(0.5, 6),
+     ylim = c(1, 6),xlab = "previous duration", ylab = "duration")
+f1 <- kde2d(duration[-272], duration[-1],
+            h = rep(1.5, 2), n = 50, lims = c(0.5, 6, 0.5, 6))
+contour(f1, xlab = "previous duration",
+        ylab = "duration", levels  =  c(0.05, 0.1, 0.2, 0.4) )
+f1 <- kde2d(duration[-272], duration[-1],
+            h = rep(0.6, 2), n = 50, lims = c(0.5, 6, 0.5, 6))
+contour(f1, xlab = "previous duration",
+        ylab = "duration", levels  =  c(0.05, 0.1, 0.2, 0.4) )
+f1 <- kde2d(duration[-272], duration[-1],
+            h = rep(0.4, 2), n = 50, lims = c(0.5, 6, 0.5, 6))
+contour(f1, xlab = "previous duration",
+        ylab = "duration", levels  =  c(0.05, 0.1, 0.2, 0.4) )
+detach("geyser")
+```
+
+```{r}
+library(sf)
+nc <- st_read(system.file("shape/nc.shp", package="sf")) %>% st_transform(32031)
+grid <- create_grid_hexagonal(nc, cell_size = 100000)
+points <- st_sample(nc, 500) %>% st_as_sf()
+kde_estimate_grid <- kde(points, band_width = 150000, grid = grid)
+raster <- create_raster(nc, cell_size = 100000)
+kde_estimate_raster <- kde(points, band_width = 150000, grid = raster)
+```
+

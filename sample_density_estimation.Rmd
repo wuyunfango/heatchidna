@@ -560,6 +560,10 @@ names(estimated) <- c("x","y","z","ZNA","H","W")
 ```
 
 
+
+
+
+
 ```{r}
 # store density estimate to a data frame
 library(raster)
@@ -567,6 +571,11 @@ library(raster)
 r = raster(estimated,crs=st_crs(vic_map))
 estimated_df= as.data.frame(r,xy=T,crs=st_crs(vic_map))
 ```
+```{r}
+estimated_df
+```
+
+
 
 Visualization of the raster layer
 
