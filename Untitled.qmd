@@ -1,5 +1,5 @@
 ---
-title: "Exploring bushfire risk across Victoria with open data sources and open-source software"
+title: "Exploring bushfire risk across Victoria"
 format: revealjs
 editor: visual
 ---
@@ -8,33 +8,126 @@ editor: visual
 
 Victoria, Australia is one of the most fire-prone regions in the world - given its fire-conducive weather and fuel conditions.
 
-![](data/all_hotspots_vic.gif){width="353"}
+::: columns
+::: {.column width="50%"}
+-   Understand risk of fire in different area of Victoria
+
+-   Provide guidance to allocating resource to areas with higher fire risk
+
+-   Develop strategies to mitigate fire risk
+:::
+
+::: {.column width="50%"}
+![](data/hotspots.gif)
+:::
+:::
 
 ## Research Questions
 
--   What part of Victoria has higher bush fire risk?
--   What factors are the more important for predicting the risk accurately
--   How change in factors affect the bush fire risk of a particular location?
+What part of Victoria has higher bush fire risk?
+
+-   To allocate resources wisely
+
+What factors are the more important for predicting the risk accurately?
+
+-   To understand how different factor associate with fire risk
+
+How change in factors affect bush fire risk of a particular location?
+
+-   Provide on guidance on mitigating fire risk under a particular condition
 
 ## Methodology
 
-### What part of Victoria has higher bush fire risk?
+::: columns
+::: {.column width="70%"}
+**2 Dimensional Kernel density estimation**
+:::
 
--   Kernal density estimation
+::: {.column width="30%"}
+![](data/matheq.png){fig-align="left" width="259"}
+:::
 
-    A [non-parametric](https://en.wikipedia.org/wiki/Non-parametric_statistics "Non-parametric statistics") method to [estimate](https://en.wikipedia.org/wiki/Estimation "Estimation") the [probability density function](https://en.wikipedia.org/wiki/Probability_density_function "Probability density function") of a [random variable](https://en.wikipedia.org/wiki/Random_variable "Random variable") based on [*kernels*](https://en.wikipedia.org/wiki/Kernel_(statistics) "Kernel (statistics)") as [weights](https://en.wikipedia.org/wiki/Weight_function "Weight function").
+::: {.column width="100%"}
+**n** is the number of items in each vector x and y, in our case the longitude and latitude
+
+**x** = (*x*~1~, *x*~2~, ..., *x~d~*)^*T*^, x~*i*~= (*x~i~*~1~, *x~i~*~2~, ..., *x~id~*)^*T*^, *i* = 1, 2 are vectors representing x and y values
+
+**H** is the bandwidth (or smoothing): *2×2* matrix which is [symmetric](https://en.wikipedia.org/wiki/Symmetric_matrix "Symmetric matrix") and [positive definite](https://en.wikipedia.org/wiki/Positive_definite_matrix "Positive definite matrix")
+
+***K*** is the [kernel](https://en.wikipedia.org/wiki/Kernel_(statistics) "Kernel (statistics)") function which is a symmetric multivariate density
+:::
+:::
+
+## Methodology 
+
+A [non-parametric](https://en.wikipedia.org/wiki/Non-parametric_statistics "Non-parametric statistics") method to [estimate](https://en.wikipedia.org/wiki/Estimation "Estimation") the [probability density function](https://en.wikipedia.org/wiki/Probability_density_function "Probability density function") of a [random variable](https://en.wikipedia.org/wiki/Random_variable "Random variable") based on [*kernels*](https://en.wikipedia.org/wiki/Kernel_(statistics) "Kernel (statistics)") as [weights](https://en.wikipedia.org/wiki/Weight_function "Weight function").
+
+**Example of 2D density estimation:**
+
+-   Here is a set of randomly generated points
 
 ```{r}
-# Data
-set.seed(14012021)
-data <- rnorm(200, mean = 4)
+set.seed(123)
+x = runif(100)
+y = runif(100)
+plot(x,y)
 
-# Kernel density estimation
-d <- density(data)
-
-# Kernel density plot
-plot(d, lwd = 2, main = "Default kernel density plot")
 ```
+
+## **Example of 2D density estimation:** 
+
+x:0.48, y: 0.44
+
+```{r}
+library(MASS)
+kde <- kde2d(x,y,n=100)
+# Library
+library(plotly)
+p <- plot_ly(z = kde$z, type = "surface")
+p 
+```
+
+## Comparison of Bandwidth Selection:
+
+::: columns
+::: {.column width="50%"}
+Bandwidth: (0.5,0.5)
+
+![](data/kde1.png){width="548"}
+:::
+
+::: {.column width="50%"}
+Bandwidth: (1,1)
+
+![](data/kde2.png){width="547"}
+:::
+:::
+
+## Result of 2D Density Estimation
+
+::: columns
+::: {.column width="50%"}
+![](data/result.png){width="611"}
+:::
+
+::: {.column width="50%"}
+![](data/nc.png){width="608"}
+:::
+
+Bandwidth(0.02606,0.02606) , which is around 2.90 kilometers in radius.
+:::
+
+## Result of 2D Density Estimation (2)
+
+Increase the bandwidth to 8.7 kilometers in radius.
+
+![](data/bigh.png){width="588"}
+
+## Result of 2D Density Estimation (3)
+
+Decrease the bandwidth to 1.45 kilometers in radius.
+
+![](data/smallh.png){width="583"}
 
 ## Methodology
 
@@ -59,10 +152,10 @@ plot(d, lwd = 2, main = "Default kernel density plot")
 
 ### Three Model
 
-![](data/tree_model.png)
+![](data/tree_model.png){width="476"}
 
 ### Random Forest model
 
-## Result
+## 
 
 ### 

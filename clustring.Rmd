@@ -9,6 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+
+
 ```{r 'load_packages', warning = FALSE, message = FALSE}
 # --- load libraries
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
@@ -143,8 +146,14 @@ p = ggplot(samples) +
 
 # visualize fire hotspot with time
 ```{r}
-animate(p)
+animate(p,end_pause = 20, rewind = FALSE)
 ```
+
+
+
+
+
+
 #apply clustering to au recent hotspot data
 
 ```{r}

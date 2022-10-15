@@ -100,12 +100,7 @@ The function sKDE() will compute the kernal density extimates, taking care of po
 sample_ignitions <- read_csv(here("data/prediction.csv"))
 ```
 
-## alter vic multipolygon to show one polygon from the coordinates of ignition points
-
-```{r}
-library(rgeos)
-library(st)
-```
+## functions for density estimation
 ```{r create functions for density estimation}
 #' Creates "n" points on a circle centered in "centre" with a radius of "radius"
 #'
@@ -448,7 +443,19 @@ plot_sKDE <- function(smooth, breaks, polygon, coord, alpha_coords = .8, size_co
 
 ```
 
+
+
+
+
+## alter vic multipolygon to show one polygon from the coordinates of ignition points
+
 ```{r}
+library(rgeos)
+library(st)
+```
+
+```{r}
+library(rnaturalearth)
 ne_states(country = "Australia", returnclass ="sf") %>% 
   filter(gns_name=="Victoria") ->vic_map
 ```
@@ -480,6 +487,7 @@ vic_polygon<-df_union_cast[[1]]
 
 
 
+
 Filter hotspots by ignitions, only to show lightning only
 ```{r}
 sample_ignitions %>% 
@@ -488,6 +496,55 @@ sample_ignitions %>%
 
 
 
+convert this to a st object
+
+
+```{r}
+lightning_ignitions_geo <- lightning_ignitions %>% 
+  select(lon,lat)
+lightning_ignitions_geo <- data.table::data.table(lightning_ignitions_geo)
+
+projcrs <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+
+DT_sf = st_as_sf(lightning_ignitions_geo, coords = c("lon", "lat"), 
+                 crs = projcrs, agr = "constant")
+```
+
+
+
+
+```{r}
+library(sf)
+library(sfhotspot)
+
+# Transform data to UTM zone 15N so that cell_size and bandwidth can be set
+# in metres
+df_utm <- st_transform(DT_sf , 32615)
+
+# Automatically set grid-cell size, bandwidth and neighbour distance
+
+#hotspot_kde(df_utm)
+
+
+# Manually set grid-cell size and bandwidth in metres, since the
+# `_utm` dataset uses a co-ordinate reference system (UTM
+# zone 15 north) that is specified in metres
+
+#hotspot_kde(df_utm, cell_size = 200, bandwidth = 5000)
+
+```
+
+
+
+
+```{r}
+max(lightning_ignitions$lat, na.rm=T)
+```
+
+
+```{r}
+min(lightning_ignitions$lat, na.rm=T)
+```
 
 
 
@@ -519,6 +576,17 @@ vic_polygon_df %>%
 ```
 
 
+
+A 3D visualization of the estimated density
+
+```{r}
+# Library
+library(plotly)
+p <- plot_ly(z = estimated$Z, type = "surface")
+p 
+```
+
+
 ```{r}
 library(tidyverse)
 library(ks)
@@ -542,6 +610,44 @@ p_igni <- plot_sKDE(smooth = estimated,
 
 ```
 
+```{r}
+p_igni 
+```
+
+```{r}
+estimated$H
+```
+
+```{r}
+#compare different bandwith
+m1<-c(0.5,0.5)
+m1
+m2<-c(1,1)
+m2
+```
+
+```{r}
+set.seed(123)
+x = runif(100)
+y = runif(100)
+library(MASS)
+kde1 <- kde2d(x,y,h=m1)
+# Library
+library(MASS)
+kde2 <- kde2d(x,y,h=m2)
+# Library
+```
+```{r}
+image(kde1)
+
+image(kde2)
+```
+```{r}
+plot3d(kde2, color.palette = "special")
+```
+
+
+
 
 Here is the visualization of the density estimation on sample data
 
@@ -552,6 +658,92 @@ print(p_igni)
 lastly, we can store the estimated result into a data frame
 
 
+```{r}
+estimated$H
+```
+
+
+change h matrix to double:
+```{r}
+m<- cbind(c(0.02606577*2,0),c(0,0.02606577*2))
+m
+```
+```{r}
+0.02606577*3
+```
+change the bandwidth to triple
+
+```{r}
+estimated2<-sKDE(U = lightning_ignitions[,c("long", "lat")],
+                         polygon = vic_polygon, optimal=FALSE,
+                         h= 0.07819731, n_clusters = 3)
+estimated_nc2<-sKDE_without_c(U = lightning_ignitions[,c("long", "lat")] ,
+                                      polygon = vic_polygon, 
+                              optimal=FALSE, h= 0.07819731)
+p_igni_2 <- plot_sKDE(smooth = estimated2, 
+                        coord = lightning_ignitions[, c("long", "lat")],
+                        alpha_coords = .3,
+                        size_coords = 0.5,
+                        breaks = seq(min(estimated2$ZNA,
+                                         estimated_nc2$ZNA,na.rm=T)*.95,
+                                     max(estimated2$ZNA,
+                                        estimated_nc2$ZNA,na.rm=T)*1.05,
+                                     length=21),
+                        polygon =vic_polygon_df,
+                        round = 3,
+                        colContour = "black") +
+  ggtitle("With correction") +
+  coord_equal()
+p_igni_2
+```
+
+
+half the bandwidth
+```{r}
+0.02606577/2
+```
+```{r}
+estimated2<-sKDE(U = lightning_ignitions[,c("long", "lat")],
+                         polygon = vic_polygon, optimal=FALSE,
+                         h= 0.01303288, n_clusters = 3)
+estimated_nc2<-sKDE_without_c(U = lightning_ignitions[,c("long", "lat")] ,
+                                      polygon = vic_polygon, 
+                              optimal=FALSE, h= 0.01303288)
+p_igni_2 <- plot_sKDE(smooth = estimated2, 
+                        coord = lightning_ignitions[, c("long", "lat")],
+                        alpha_coords = .3,
+                        size_coords = 0.5,
+                        breaks = seq(min(estimated2$ZNA,
+                                         estimated_nc2$ZNA,na.rm=T)*.95,
+                                     max(estimated2$ZNA,
+                                        estimated_nc2$ZNA,na.rm=T)*1.05,
+                                     length=21),
+                        polygon =vic_polygon_df,
+                        round = 3,
+                        colContour = "black") +
+  ggtitle("With correction") +
+  coord_equal()
+p_igni_2
+```
+
+```{r}
+
+p_igni_nc <- plot_sKDE(smooth = estimated_nc, 
+                        coord = lightning_ignitions[, c("long", "lat")],
+                        alpha_coords = .3,
+                        size_coords = 0.5,
+                        breaks = seq(min(estimated$ZNA,
+                                         estimated_nc$ZNA,na.rm=T)*.95,
+                                     max(estimated$ZNA,
+                                        estimated_nc$ZNA,na.rm=T)*1.05,
+                                     length=21),
+                        polygon =vic_polygon_df,
+                        round = 3,
+                        colContour = "black") +
+  ggtitle("Without correction") +
+  coord_equal()
+p_igni_nc
+```
 
 
 ```{r}
@@ -571,10 +763,11 @@ library(raster)
 r = raster(estimated,crs=st_crs(vic_map))
 estimated_df= as.data.frame(r,xy=T,crs=st_crs(vic_map))
 ```
+
+
 ```{r}
 estimated_df
 ```
-
 
 
 Visualization of the raster layer
