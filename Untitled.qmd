@@ -273,6 +273,7 @@ Proxy to human activity
 #| echo: false
 example<-sample_hotspots[1,]
 ```
+
 ```{r}
 #| echo: true
 previouse_risk<- example$density_result
@@ -281,10 +282,12 @@ new_risk<-predict(RFM_BIG, example)
 cat("previous risk is: ", previouse_risk,"with increase in dist_to_camp", 
       "\\n new risk prediction is : " ,new_risk)
 ```
+
 ```{r}
 #| echo: false
 example<-sample_hotspots[1,]
 ```
+
 ```{r}
 #| echo: true
 previouse_risk<- example$density_result
@@ -294,7 +297,6 @@ cat("Previous risk is: ", previouse_risk,"with increase in dist_to_cfa",
       ",\nNew risk prediction becomes : " ,new_risk)
 ```
 
-
 ## Effects of Change in Variables Values to risk prediction
 
 Enviromental variables
@@ -303,6 +305,7 @@ Enviromental variables
 #| echo: false
 example<-sample_hotspots[1,]
 ```
+
 ```{r}
 #| echo: true
 previouse_risk<- example$density_result
@@ -327,6 +330,3 @@ cat("Previous risk is: ", previouse_risk,", changing amrf720 to",
     example$amrf720,
       ",\nNew risk prediction becomes : " ,new_risk)
 ```
-
-
-
