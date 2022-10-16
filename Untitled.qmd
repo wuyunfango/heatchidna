@@ -4,6 +4,17 @@ format: revealjs
 editor: visual
 ---
 
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(here)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+library(knitr)
+library(randomForest)
+```
+
 ## Motivation
 
 Victoria, Australia is one of the most fire-prone regions in the world - given its fire-conducive weather and fuel conditions.
@@ -58,7 +69,7 @@ How change in factors affect bush fire risk of a particular location?
 :::
 :::
 
-## Methodology 
+## Methodology
 
 A [non-parametric](https://en.wikipedia.org/wiki/Non-parametric_statistics "Non-parametric statistics") method to [estimate](https://en.wikipedia.org/wiki/Estimation "Estimation") the [probability density function](https://en.wikipedia.org/wiki/Probability_density_function "Probability density function") of a [random variable](https://en.wikipedia.org/wiki/Random_variable "Random variable") based on [*kernels*](https://en.wikipedia.org/wiki/Kernel_(statistics) "Kernel (statistics)") as [weights](https://en.wikipedia.org/wiki/Weight_function "Weight function").
 
@@ -74,7 +85,7 @@ plot(x,y)
 
 ```
 
-## **Example of 2D density estimation:** 
+## **Example of 2D density estimation:**
 
 x:0.48, y: 0.44
 
@@ -87,7 +98,7 @@ p <- plot_ly(z = kde$z, type = "surface")
 p 
 ```
 
-## Comparison of Bandwidth Selection:
+## Comparison of Bandwidth:
 
 ::: columns
 ::: {.column width="50%"}
@@ -107,11 +118,11 @@ Bandwidth: (1,1)
 
 ::: columns
 ::: {.column width="50%"}
-![](data/result.png){width="611"}
+![](data/result.png){width="587" height="415"}
 :::
 
 ::: {.column width="50%"}
-![](data/nc.png){width="608"}
+![](data/nc.png){width="591" height="420"}
 :::
 
 Bandwidth(0.02606,0.02606) , which is around 2.90 kilometers in radius.
@@ -152,10 +163,170 @@ Decrease the bandwidth to 1.45 kilometers in radius.
 
 ### Three Model
 
-![](data/tree_model.png){width="476"}
+![](data/tree.png){width="658"}
 
-### Random Forest model
+## Three Model
 
-## 
+How did tree model decide on which variable and how to split?
 
-### 
+::: columns
+::: {.column width="70%"}
+Node splitting, or simply splitting, is the process of dividing a node into multiple sub-nodes to create relatively pure nodes.
+
+This process is performed multiple times during the training process until only homogenous nodes are left.
+
+-   **Reduction in Variance**
+
+![](https://cdn.analyticsvidhya.com/wp-content/uploads/2020/06/ns2.png){fig-align="center" width="211"}
+:::
+
+::: {.column width="30%"}
+![](images/Root%20Node.webp)
+:::
+:::
+
+## Random Forest model
+
+::: columns
+::: {.column width="50%"}
+1.  Decide number of trees to fit, n
+2.  Bootstrap samples from original data set n times, creating n training and testing sets
+3.  Fit a decision tree to each set of training set
+4.  Predict result by averaging all predicted values base on all trees
+:::
+
+::: {.column width="50%"}
+![](data/forest.png)
+:::
+:::
+
+## Fitting the Random Forest model
+
+MSE of tree model: 0.0038
+
+```{r}
+#| echo: true
+sample_hotspots <-read_csv(here::here("model_df.csv"))
+set.seed(456)
+RFM = randomForest(density_result~., 
+                   data = sample_hotspots,
+                   importance=TRUE)
+
+print(RFM)
+```
+
+## Fitting the Bigger Random Forest
+
+```{r}
+#| echo: true
+set.seed(222)
+RFM_BIG = randomForest(density_result~.,
+                  #change number of trees to 1000
+                   ntree =1000, 
+                  #try 25 variables at each node
+                  mtry = 25, 
+                  data = sample_hotspots,
+                  importance=TRUE)
+
+print(RFM_BIG)
+```
+
+## Variable importance
+
+![](data/varimp.png){width="623"}
+
+%IncMSE of j'th is (mse(j)-mse0)/mse0 \* 100%
+
+::: notes
+%IncMSE is the most robust and informative measure. It is the increase in mse of predictions(estimated with out-of-bag-CV) as a result of variable j being permuted(values randomly shuffled).
+
+1.  grow regression forest. Compute OOB-mse, name this mse0.
+
+2.  for 1 to j var: permute values of column j, then predict and compute OOB-mse(j)
+
+3.  %IncMSE of j'th is (mse(j)-mse0)/mse0 \* 100%
+:::
+
+## Variable importance
+
+![](relationship.png){width="672"}
+
+::: notes
+amaxt90: Average maximum temperature in the past 90 days - Celsius degree
+
+amint720: Average maximum temperature in the past 720 days - Celsius degree
+
+arf720: Average maximum temperature in the past 720 days - Celsius degree
+
+aws_m24: Average wind speed in last 24 months - m/s
+
+log_dist_cfa: Natural logarithm of the distance to the nearest CFA station - m
+
+log_dist_camp: Natural logarithm of the distance to campsites
+:::
+
+## Effects of Change in Variables Values to risk prediction
+
+Proxy to human activity
+
+```{r}
+#| echo: false
+example<-sample_hotspots[1,]
+```
+```{r}
+#| echo: true
+previouse_risk<- example$density_result
+example$dist_camp <- 150000
+new_risk<-predict(RFM_BIG, example)
+cat("previous risk is: ", previouse_risk,"with increase in dist_to_camp", 
+      "\\n new risk prediction is : " ,new_risk)
+```
+```{r}
+#| echo: false
+example<-sample_hotspots[1,]
+```
+```{r}
+#| echo: true
+previouse_risk<- example$density_result
+example$dist_cfa <- 50000
+new_risk<-predict(RFM_BIG, example)
+cat("Previous risk is: ", previouse_risk,"with increase in dist_to_cfa", 
+      ",\nNew risk prediction becomes : " ,new_risk)
+```
+
+
+## Effects of Change in Variables Values to risk prediction
+
+Enviromental variables
+
+```{r}
+#| echo: false
+example<-sample_hotspots[1,]
+```
+```{r}
+#| echo: true
+previouse_risk<- example$density_result
+example$amaxt60 <- 40
+new_risk<-predict(RFM_BIG, example)
+cat("Previous risk is: ", previouse_risk,", changing amaxt60 to",
+    example$amaxt60,
+      ",\nNew risk prediction becomes : " ,new_risk)
+```
+
+```{r}
+#| echo: false
+example<-sample_hotspots[1,]
+```
+
+```{r}
+#| echo: true
+previouse_risk<- example$density_result
+example$amrf720 <- 5
+new_risk<-predict(RFM_BIG, example)
+cat("Previous risk is: ", previouse_risk,", changing amrf720 to",
+    example$amrf720,
+      ",\nNew risk prediction becomes : " ,new_risk)
+```
+
+
+
