@@ -4,6 +4,14 @@ format: revealjs
 editor: visual
 ---
 
+## 
+
+## Exploring bushfire risk across Victoria with open data sources and open source software
+
+By Yunfang Wu
+
+Under the supervision of Professor Di Cook and Dr Kate Saunders
+
 ```{r}
 library(ggplot2)
 library(tidyverse)
@@ -33,7 +41,23 @@ Victoria, Australia is one of the most fire-prone regions in the world - given i
 :::
 :::
 
-## Research Questions
+::: notes
+Bushfires are a common and natural phenomenon that frequently occurs in many places around the world.
+
+Victoria, Australia is one of the most fire-prone regions in the world - given its fire-conducive weather and fuel conditions. 
+
+in the past including, horrific events had happened here in Victoria.
+
+The animation here shows historical fire ignition points in Victoria gathered by the Japanese [Himawari-](http://www.bom.gov.au/australia/satellite/himawari.shtml)8 satellite.
+
+It is important to understand and the risk of bushfires as understanding the risk of fire in different areas of Victoria would help in developing strategies for mitigating the risks. 
+
+Effective bush fire risk indicator would provides relevant and timely data to both the emergency personnel and the public to mitigate fire risk
+
+and allowing them to allocating resources to where its needed.
+:::
+
+## Research Questions/ Contribution of the thesis
 
 What part of Victoria has higher bush fire risk?
 
@@ -47,26 +71,41 @@ How change in factors affect bush fire risk of a particular location?
 
 -   Provide on guidance on mitigating fire risk under a particular condition
 
+::: notes
+
+To put this in context, I focused on there three research questions as the contribution of this thesis
+
+to allow resource allocation, the first question is What part of Victoria has higher bush fire risk?
+:::
+
 ## Methodology
 
-::: columns
-::: {.column width="70%"}
-**2 Dimensional Kernel density estimation**
-:::
+![](data/matheq.png){width="152"}
 
-::: {.column width="30%"}
-![](data/matheq.png){fig-align="left" width="259"}
-:::
+Construction of 2D kernel density estimate. Left. Individual kernels. Right. Kernel density estimate.
 
-::: {.column width="100%"}
-**n** is the number of items in each vector x and y, in our case the longitude and latitude
+![](data/2d.png)
 
-**x** = (*x*~1~, *x*~2~, ..., *x~d~*)^*T*^, x~*i*~= (*x~i~*~1~, *x~i~*~2~, ..., *x~id~*)^*T*^, *i* = 1, 2 are vectors representing x and y values
+::: notes
+2 dimentional kernal density estimation is used to understand the which part of Victoria has higher fire risk compare to other parts in Victoria.
 
-**H** is the bandwidth (or smoothing): *2×2* matrix which is [symmetric](https://en.wikipedia.org/wiki/Symmetric_matrix "Symmetric matrix") and [positive definite](https://en.wikipedia.org/wiki/Positive_definite_matrix "Positive definite matrix")
+A [non-parametric](https://en.wikipedia.org/wiki/Non-parametric_statistics "Non-parametric statistics") method to [estimate](https://en.wikipedia.org/wiki/Estimation "Estimation") the [probability density function](https://en.wikipedia.org/wiki/Probability_density_function "Probability density function") of a [random variable](https://en.wikipedia.org/wiki/Random_variable "Random variable") based on [*kernels*](https://en.wikipedia.org/wiki/Kernel_(statistics) "Kernel (statistics)") as [weights](https://en.wikipedia.org/wiki/Weight_function "Weight function").
 
-***K*** is the [kernel](https://en.wikipedia.org/wiki/Kernel_(statistics) "Kernel (statistics)") function which is a symmetric multivariate density
-:::
+non-parametric meaning we make less assumption about the distribution of data, but instead we determined the probability distribution directly from the observed data.
+
+I our case, we treat fire hot spot location as a random variable, and we are estimating the probability distribution based on a sample data set of historical fire ignition points in Victoria.
+
+A kernal density estimate takes two parameters, K , that is a kernal density forumula, this can be any probability density distribution that is symmetric, for example, the circles on the left hand side represent a 2D Gaussian distribution. A kernel will be place on each observed point.
+
+The H bandwidth, is a matrix that decide the area where we want to add up the Gaussian distribution.
+
+For estimating fire hot spot density, Base on our choice of bandwidth, for hot spots within the bandwidth value, the probability distribution kernels will be added together and divided by the number of points with the bandwidth, to compute the overall probability density of that area.
+
+In practice, the choice of kernel does not affect the overall density estimation much.
+
+However, the bandwidth matters.
+
+To better illustrate the effect of different bandwidth choice on the density, lets look at an example.
 :::
 
 ## Methodology
@@ -85,6 +124,12 @@ plot(x,y)
 
 ```
 
+::: notes
+Here is a set of randomly generated points,
+
+there are 100 points with coordinate x and y
+:::
+
 ## **Example of 2D density estimation:**
 
 x:0.48, y: 0.44
@@ -97,6 +142,22 @@ library(plotly)
 p <- plot_ly(z = kde$z, type = "surface")
 p 
 ```
+
+::: notes
+Here is the estimated density as a 3d object.
+
+The kernel used here is a Gaussian kernel, and the bandwidth is 0.48 on the x axis and 0.44 on the y axis
+
+Since our data is two dimensional, the overall density estimation for the 2 dimensional data will become 3 dimensional.
+
+the third dimension Z represent the estimated density of the corresponding point(x,y)
+
+This diagram is relatively smooth since our bandwidth is quite large.
+
+Now lets compare result of density estimate using different bandwidth.
+:::
+
+## 
 
 ## Comparison of Bandwidth:
 
@@ -114,7 +175,25 @@ Bandwidth: (1,1)
 :::
 :::
 
+::: notes
+Here are two density estimate on for the randomly generated points,
+
+It represent density estimate in the format of a heat map.
+
+More red meaning the area has a higher density.
+
+we can see that the one with bandwidth 1,1 on the right is much smoother than the lefe one.
+
+Overall we can see that a smaller bandwidth will result more wiggly estimate; which means the estimated density varies more for a given size of area.
+:::
+
 ## Result of 2D Density Estimation
+
+-   Bias of density estimation of edges (or frontiers) of regions
+
+    -   Broader bias
+
+    -   Ripley's correction
 
 ::: columns
 ::: {.column width="50%"}
@@ -128,11 +207,31 @@ Bandwidth: (1,1)
 Bandwidth(0.02606,0.02606) , which is around 2.90 kilometers in radius.
 :::
 
+::: notes
+The Bias of density estimation of edges of regions also need to take account.
+
+Bias of density estimation of edges happens because the fact that we do not have what the density look like outside the map, but still need to average the density base areas outside the map, because the way 2 d density estimation works.
+
+Therefore, to address this problem, a correction is used by mirroring the data points inside the map to the outside area, then calculate the density with the added buffer area.
+
+((compare the graph))
+:::
+
 ## Result of 2D Density Estimation (2)
 
 Increase the bandwidth to 8.7 kilometers in radius.
 
 ![](data/bigh.png){width="588"}
+
+::: notes
+Looking at the plot above,
+
+we notice that the range of the density has been reduced, it is not 0\~0.369,
+
+where previously when our bandwidth is 0\~0.532, when the bandwidth was about 2.9 km in radius.
+
+As bandwidth parameter increase, the overall density estimation is more smooth
+:::
 
 ## Result of 2D Density Estimation (3)
 
@@ -140,24 +239,11 @@ Decrease the bandwidth to 1.45 kilometers in radius.
 
 ![](data/smallh.png){width="583"}
 
-## Methodology
+::: notes
+lets now compare the result from the different choice of bandwidth parameter. Comparison of result
 
-### What part of Victoria has higher bush fire risk?
-
--   Bias of density estimation of edges (or frontiers) of regions
-
-    -   Broader bias
-
-    -   Ripley's correction
-
-```{r}
-#child = "sample_density_estimation.Rmd"
-    #| echo: false
-    #| fig-cap: "Desity estimation with correction of broader bias"
-
-
-  #  print(p_igni)
-```
+I decided to go with the first band width, it gives more detail than using a 8km but better than 1.45km where the result are really wiggly
+:::
 
 ## Modeling
 
@@ -165,7 +251,25 @@ Decrease the bandwidth to 1.45 kilometers in radius.
 
 ![](data/tree.png){width="658"}
 
-## Three Model
+::: notes
+Now we have estimated the risk variable, we will use many different environmental variables, as well as the forest type, and proxy to human activity data to find relationship between the estimated density and the variables we have.
+
+The model we choose to is a random forest model
+
+To better understand how a random forest model works, we can take a look at the tree model.
+
+here is a fitted tree model--- exaplain
+
+**Parent and Child Node:** A node that gets divided into sub-nodes is known as Parent Node,
+
+and these sub-nodes are known as Child Nodes. Since a node can be divided into multiple sub-nodes, therefore a node can act as a parent node of numerous child nodes
+
+**Root Node:** The top-most node of a decision tree. It does not have any parent node. It represents the entire population or sample
+
+**Leaf / Terminal Nodes:** Nodes that do not have any child node are known as Terminal/Leaf Nodes
+:::
+
+## Tree Model
 
 How did tree model decide on which variable and how to split?
 
@@ -173,7 +277,7 @@ How did tree model decide on which variable and how to split?
 ::: {.column width="70%"}
 Node splitting, or simply splitting, is the process of dividing a node into multiple sub-nodes to create relatively pure nodes.
 
-This process is performed multiple times during the training process until only homogenous nodes are left.
+This process is performed multiple times during the training process until only homogeneous nodes are left.
 
 -   **Reduction in Variance**
 
@@ -183,6 +287,31 @@ This process is performed multiple times during the training process until only 
 ::: {.column width="30%"}
 ![](images/Root%20Node.webp)
 :::
+:::
+
+::: notes
+
+Now lets look at the concept of
+
+A decision tree makes decisions by splitting nodes into sub-nodes. This process is performed multiple times during the training process until only homogeneous nodes are left. Node splitting, or simply splitting, is the process of dividing a node into multiple sub-nodes to create relatively pure nodes.
+
+This process is performed multiple times during the training process until only homogeneous nodes are left. 
+
+For predicting continuous output , Reduction in Variance is used to decide node purity
+
+1.  For each split, individually calculate the variance of each child node
+
+2.  Calculate the variance of each split as the weighted average variance of child nodes
+
+3.  Select the split with the lowest variance
+
+4.  Perform steps 1-3 until completely homogeneous nodes are achieved
+
+Disadvantages of trees
+
+Tress are very sensitive to small change in training data
+
+Low variability, Trees can have higher variability across different training data sets.
 :::
 
 ## Random Forest model
@@ -200,6 +329,20 @@ This process is performed multiple times during the training process until only 
 :::
 :::
 
+::: notes
+Our choice of the model is a random forest model
+
+Random Forest model address the disadvantage of tree model, as The predicted results is an average of different decision trees, the Random forest algorithm **avoids and prevents over fitting by using multiple trees**. 
+
+From the process, we can see there are two feature of randomness:
+
+we used bootstrap sample and each tree is a different data sample drawn from a training set with replacement.
+
+Another instance of randomness is called feature bagging, where it **randomly selects subsets of features used in each data sample**, which add more diversity to the dataset and reducing the correlation among decision trees
+
+Finally, the oob sample is then used for cross-validation, finalizing that prediction. 
+:::
+
 ## Fitting the Random Forest model
 
 MSE of tree model: 0.0038
@@ -214,6 +357,18 @@ RFM = randomForest(density_result~.,
 
 print(RFM)
 ```
+
+::: notes
+
+
+Builds *500* decision tree regressors (estimators). The number of estimators *n* [defaults to 500 in ](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html)R, where it is called *n_estimators*. The trees are built following the specified hyperparameters (e.g. minimum number of samples at the leaf nodes, maximum depth that a tree can grow, etc.).
+
+Average prediction across estimators. Each decision tree regression predicts a number as an output for a given input. Random forest regression takes the average of those predictions as its \'final\' output.
+
+(look at the result tree)
+
+the MSE shows the average mean squared residuals across 500 different testing sets
+:::
 
 ## Fitting the Bigger Random Forest
 
@@ -231,6 +386,48 @@ RFM_BIG = randomForest(density_result~.,
 print(RFM_BIG)
 ```
 
+::: notes
+This time, we change the default parameter, and are fitting 1000 trees,
+
+there is a reduction in the MEAN of squared error, previously it was 0.001337
+
+Data description:
+
+FOR_TYPE: Forest type. Eg. Acacia, Callitris, Casuarina, etc.
+
+COVER: Forest crown cover
+
+HEIGHT: Forest height class
+
+arf360: Average rainfall in the past 360 days in mm
+
+ase90: Average global solar exposure in the past 90 days - MJ/m\^2
+
+ase180: Average global solar exposure in the past 180 days - MJ/m\^2
+
+ase720: Average global solar exposure in the past 720 days - MJ/m\^2
+
+amaxt90: Average maximum temperature in the past 90 days - Celsius degree
+
+amaxt180: Average maximum temperature in the past 180 days - Celsius degree
+
+amaxt720: Average maximum temperature in the past 720 days - Celsius degree
+
+amint180: Average minimum temperature in the past 180 days - Celsius degree
+
+ws: Average wind speed on that day - m/s
+
+aws_m12: Average wind speed in last 12 months - m/s
+
+aws_m24: Average wind speed in last 24 months - m/s
+
+log_dist_cfa: Natural logarithm of the distance to the nearest CFA station - m
+
+log_dist_camp: Natural logarithm of the distance to the nearest recreation site - m
+
+log_dist_road: Natural logarithm of the distance to the nearest road - m
+:::
+
 ## Variable importance
 
 ![](data/varimp.png){width="623"}
@@ -238,13 +435,19 @@ print(RFM_BIG)
 %IncMSE of j'th is (mse(j)-mse0)/mse0 \* 100%
 
 ::: notes
-%IncMSE is the most robust and informative measure. It is the increase in mse of predictions(estimated with out-of-bag-CV) as a result of variable j being permuted(values randomly shuffled).
+Now lets take a look at the variable importance plot, this plot ranks the importance of different variables in the random forest model makes the prediction.
+
+%IncMSE is the most robust and informative measure. It is the increase in mse of predictions as a result of a variable values randomly shuffled.
 
 1.  grow regression forest. Compute OOB-mse, name this mse0.
 
-2.  for 1 to j var: permute values of column j, then predict and compute OOB-mse(j)
+2.  for all variables, permute their values, then predict and compute the MSE on testing sets
 
-3.  %IncMSE of j'th is (mse(j)-mse0)/mse0 \* 100%
+3.  the formula shows how the %Increase MSE is calculated
+
+Increase in NodePurity is similar to the steps measuring %IncMSE,
+
+where impurity is measured as sum of squared deviations from the mean of the terminal node.
 :::
 
 ## Variable importance
@@ -252,6 +455,10 @@ print(RFM_BIG)
 ![](relationship.png){width="672"}
 
 ::: notes
+this is a group of scatter plot of some of the most important variables in used in the Random Forest modle.
+
+form the plot, we cannot see obvious relationships between --- and ---
+
 amaxt90: Average maximum temperature in the past 90 days - Celsius degree
 
 amint720: Average maximum temperature in the past 720 days - Celsius degree
