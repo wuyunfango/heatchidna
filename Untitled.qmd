@@ -84,7 +84,7 @@ to allow resource allocation, the first question is What part of Victoria has hi
 
 Construction of 2D kernel density estimate. Left. Individual kernels. Right. Kernel density estimate.
 
-![](data/2d.png)
+![](data/2d.png){width="574"}
 
 ::: notes
 2 dimentional kernal density estimation is used to understand the which part of Victoria has higher fire risk compare to other parts in Victoria.
