@@ -97,7 +97,7 @@ log_dist_road: Natural logarithm of the distance to the nearest road - m
 2. Now split the data to training and testing sets, have the training set be 70% of the data, and the test set be 30% of the data.
 
 ```{r}
-set.seed(123)
+set.seed(124)
 model_df <- sample_hotspots%>%
   mutate(test_or_train = 
            sample(c("test","train"),n(),replace = TRUE, prob = c(.3,.7))) 
@@ -120,7 +120,7 @@ model_test <- model_df %>%
 
 
 ```{r}
-set.seed(222)
+set.seed(223)
 reg_tree <- rpart(density_result~. , data = model_train, 
   minbucket = 1)
 ```
@@ -133,9 +133,12 @@ rpart.plot(reg_tree)
 6. Use the tree to predict for the test part of the data
 
 ```{r}
-set.seed(222)
+set.seed(223)
 predictions_tree <- predict(reg_tree, model_test)
 ```
+
+
+
 
 
 7. Calculate the root mean square error
@@ -172,13 +175,26 @@ RFM = randomForest(density_result~., data = sample_hotspots,importance=TRUE)
 ```
 
 ```{r}
-print(RFM)
+print(RFM2)
+```
+
+```{r}
+plot(RFM)
+
+```
+
+
+
+```{r}
+sample_hotspots <-read_csv(here::here("model_df.csv"))
+set.seed(456)
+RFM_small = randomForest(density_result~.,ntree =150, data = sample_hotspots,importance=TRUE)
 ```
 now change the default parameter, fit 1000 trees
 
 ```{r}
 set.seed(678)
-RFM2 = randomForest(density_result~., ntree =1000, mtry = 25, importance = TRUE,data = sample_hotspots)
+RFM2 = randomForest(density_result~., ntree =1000, mtry = 10, importance = TRUE,data = sample_hotspots)
 
 ```
 compare result
@@ -187,6 +203,11 @@ compare result
 RFM2
 ```
 
+```{r}
+print(RFM_2)
+```
+
+
 results are similar
 
 
@@ -194,7 +215,7 @@ results are similar
 importance(RFM,type=1)
 ```
 ```{r}
-varImpPlot(RFM, scale=TRUE,n.var=13,main="Variable Importance Plot")
+varImpPlot(RFM_small, scale=TRUE,n.var=20,main="Variable Importance Plot")
 ```
 
 

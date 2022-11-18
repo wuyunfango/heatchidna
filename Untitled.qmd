@@ -72,7 +72,6 @@ How change in factors affect bush fire risk of a particular location?
 -   Provide on guidance on mitigating fire risk under a particular condition
 
 ::: notes
-
 To put this in context, I focused on there three research questions as the contribution of this thesis
 
 to allow resource allocation, the first question is What part of Victoria has higher bush fire risk?
@@ -290,7 +289,6 @@ This process is performed multiple times during the training process until only 
 :::
 
 ::: notes
-
 Now lets look at the concept of
 
 A decision tree makes decisions by splitting nodes into sub-nodes. This process is performed multiple times during the training process until only homogeneous nodes are left. Node splitting, or simply splitting, is the process of dividing a node into multiple sub-nodes to create relatively pure nodes.
@@ -359,11 +357,9 @@ print(RFM)
 ```
 
 ::: notes
+Builds *500* decision tree regressors (estimators). The number of estimators *n* [defaults to 500 in](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html)R, where it is called *n_estimators*. The trees are built following the specified hyperparameters (e.g. minimum number of samples at the leaf nodes, maximum depth that a tree can grow, etc.).
 
-
-Builds *500* decision tree regressors (estimators). The number of estimators *n* [defaults to 500 in ](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html)R, where it is called *n_estimators*. The trees are built following the specified hyperparameters (e.g. minimum number of samples at the leaf nodes, maximum depth that a tree can grow, etc.).
-
-Average prediction across estimators. Each decision tree regression predicts a number as an output for a given input. Random forest regression takes the average of those predictions as its \'final\' output.
+Average prediction across estimators. Each decision tree regression predicts a number as an output for a given input. Random forest regression takes the average of those predictions as its 'final' output.
 
 (look at the result tree)
 
@@ -379,7 +375,7 @@ RFM_BIG = randomForest(density_result~.,
                   #change number of trees to 1000
                    ntree =1000, 
                   #try 25 variables at each node
-                  mtry = 25, 
+                  mtry = 14, 
                   data = sample_hotspots,
                   importance=TRUE)
 
@@ -463,7 +459,7 @@ amaxt90: Average maximum temperature in the past 90 days - Celsius degree
 
 amint720: Average maximum temperature in the past 720 days - Celsius degree
 
-arf720: Average maximum temperature in the past 720 days - Celsius degree
+arf720: Average maximum temperature in the past 720 days -
 
 aws_m24: Average wind speed in last 24 months - m/s
 
@@ -510,7 +506,8 @@ Enviromental variables
 
 ```{r}
 #| echo: false
-example<-sample_hotspots[1,]
+example<-sample_hotspots[1,]$arf720
+example
 ```
 
 ```{r}
@@ -526,14 +523,15 @@ cat("Previous risk is: ", previouse_risk,", changing amaxt60 to",
 ```{r}
 #| echo: false
 example<-sample_hotspots[1,]
+example
 ```
 
 ```{r}
 #| echo: true
 previouse_risk<- example$density_result
-example$amrf720 <- 5
-new_risk<-predict(RFM_BIG, example)
+example$arf7 <- 1
+new_risk<-predict(RFM, example)
 cat("Previous risk is: ", previouse_risk,", changing amrf720 to",
-    example$amrf720,
+    example$arf7,
       ",\nNew risk prediction becomes : " ,new_risk)
 ```
